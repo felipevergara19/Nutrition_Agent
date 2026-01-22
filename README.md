@@ -1,90 +1,102 @@
 # Nutrition Agent 🥑
 
-Bienvenido al repositorio de **Nutrition Agent**. Este proyecto es un asistente de nutrición inteligente diseñado para ayudar a personas con **resistencia a la insulina** o que buscan controlar su índice glucémico (IG) a tomar mejores decisiones alimenticias.
+**Nutrition Agent** is an intelligent nutrition assistant designed for individuals with **insulin resistance** or those monitoring their Glycemic Index (GI). It helps users make better dietary decisions by analyzing ingredients and suggesting healthy, low-GI recipes.
 
-El agente analiza una lista de ingredientes disponibles (simulando una despensa o respuesta de API), filtra aquellos que son seguros según un umbral de IG configurado y sugiere recetas saludables.
+The agent takes a list of ingredients, evaluates them based on nutritional safety, and leverages **Google Gemini AI** to generate personalized meal suggestions, which are then stored in **AWS DynamoDB** for history tracking.
 
-## 🚀 Funcionalidades Principales
+## 🚀 Core Features
 
-*   **Filtrado de Ingredientes**: Analiza ingredientes basándose en su Índice Glucémico (IG).
-*   **Seguridad Alimentaria**: Permite configurar un `max_ig_allowed` (IG máximo permitido) para personalizar el filtro según las necesidades del usuario.
-*   **Sugerencia de Recetas**: Tana los ingredientes seguros y genera una propuesta de receta (actualmente simulada).
+*   **Intelligent Recipe Generation**: Uses **Gemini 2.5 Flash Lite** to create nutritionist-approved recipes.
+*   **GI Safety Check**: Filters or warns about high-GI ingredients to protect users with insulin resistance.
+*   **Persistent History**: Automatically saves generated recipes to **AWS DynamoDB** for future reference.
+*   **FastAPI Backend**: A robust and scalable API to handle requests and integrations.
 
-## 📂 Estructura del Proyecto
-
-El proyecto está organizado de la siguiente manera:
+## 📂 Project Structure
 
 ```text
 Nutrition_Agent/
-├── src/
-│   ├── agents.py       # Lógica del agente (Filtros y generación de recetas)
-│   ├── data_models.py  # Datos simulados (Ingredientes de ejemplo)
-│   └── main.py         # Punto de entrada de la aplicación
-├── .gitignore
-├── requirements.txt
+├── app/
+│   ├── main.py         # FastAPI application and routes
+│   ├── agents.py       # Core logic for ingredient filtering (Legacy/Logic)
+│   ├── services.py     # External integrations (Gemini AI)
+│   ├── database.py     # Database operations (AWS DynamoDB)
+│   ├── models.py       # Pydantic data schemas
+│   └── __init__.py
+├── infra/              # Infrastructure scripts
+├── requirements.txt    # Python dependencies
 └── README.md
 ```
 
-## 🛠️ Requisitos e Instalación
+## 🛠️ Requirements & Installation
 
-1.  **Clonar el repositorio**:
+1.  **Clone the repository**:
     ```bash
-    git clone <URL_DEL_REPOSITORIO>
+    git clone <REPOSITORY_URL>
     cd Nutrition_Agent
     ```
 
-2.  **Requisitos**:
-    *   Python 3.x instalado.
+2.  **Prerequisites**:
+    *   Python 3.9+
+    *   An AWS account with DynamoDB access.
+    *   A Google AI (Gemini) API Key.
 
-3.  **Entorno Virtual (Opcional pero recomendado)**:
+3.  **Setup Environment Variables**:
+    Create a `.env` file in the root directory:
+    ```env
+    GOOGLE_API_KEY=your_gemini_api_key_here
+    AWS_ACCESS_KEY_ID=your_aws_key
+    AWS_SECRET_ACCESS_KEY=your_aws_secret
+    ```
+
+4.  **Virtual Environment (Recommended)**:
     ```bash
     python -m venv venv
-    # En Windows:
+    # On Windows:
     .\venv\Scripts\activate
-    # En Mac/Linux:
+    # On macOS/Linux:
     source venv/bin/activate
     ```
 
-## ▶️ Ejecución
+5.  **Install Dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-Para iniciar el agente y ver cómo procesa los datos de prueba:
+## ▶️ Execution
 
-```bash
-# Estando en la raiz del proyecto
-python src/main.py
-```
-
-o si usas el lanzador `py` en Windows:
+To start the FastAPI server:
 
 ```bash
-py src/main.py
+uvicorn app.main:app --reload
 ```
 
-### Ejemplo de Salida
+The API will be available at `http://127.0.0.1:8000`. You can access the interactive documentation at `/docs`.
 
-```text
-Bienvenido al asistente de nutricion
-Recibidos 5 ingredientes
-Filtrado 2 ingredientes
-[{'name': 'Huevos', 'ig': 0, 'category': 'protein'}, {'name': 'Palta', 'ig': 10, 'category': 'fat'}]
- Agente: Pensando receta con... Huevos, Palta
-Receta sugerida:
-{'recipe_name': 'Tostadas con queso y aguacate', ...}
+### Example Request (`POST /receta`)
+
+**Body**:
+```json
+{
+  "usuario_id": "user123",
+  "lista_ingredientes": [
+    {"name": "Eggs", "ig": 0, "category": "protein"},
+    {"name": "Avocado", "ig": 10, "category": "fat"}
+  ]
+}
 ```
 
-## 🧠 Cómo funciona
+## 🧠 How It Works
 
-1.  **Datos**: `data_models.py` provee una lista de ingredientes con su IG y categoría.
-2.  **Agente**: En `agents.py`, la clase `NutritionAgent` se inicializa con un límite de IG (por defecto 50 en el ejemplo).
-3.  **Proceso**:
-    *   El método `filter_safe_ingredients` recorre la lista y descarta los alimentos con IG alto (ej. azúcar, pan blanco).
-    *   El método `suggest_recipe` toma los ingredientes seguros y simula la creación de una receta apta para el usuario.
+1.  **API Entry**: The request is received by the FastAPI endpoint.
+2.  **AI Consultation**: The `services.py` module sends the ingredient list to **Google Gemini** with a specific prompt tailored for insulin resistance.
+3.  **Storage**: The resulting recipe is saved to the `RecetasHistoria` table in **DynamoDB**, linked to the `usuario_id`.
+4.  **Response**: The system returns the generated recipe and the database status to the user.
 
-## 📝 Próximos Pasos
+## 📝 Roadmap
 
-*   Conectar con una API real de alimentos/recetas.
-*   Implementar un LLM real para la generación dinámica de recetas en `suggest_recipe`.
-*   Añadir más filtros (calorías, alergias, etc.).
+*   [ ] Connect to real food databases (e.g., Nutritionix).
+*   [ ] Implement user authentication and profiles.
+*   [ ] Add more advanced filtering (allergies, keto, vegan).
+*   [ ] Front-end application for mobile/web users.
 
 ---
-
