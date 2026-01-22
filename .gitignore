@@ -1,3 +1,12 @@
 .env
-__puchache__/
+__pycache__/
 *.pyc
+.venv/
+venv/
+
+# --- Terraform (Infraestructura) ---
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+infra/.terraform/
